@@ -5,6 +5,7 @@ from discord.ext import commands
 import os
 import random
 
+
 # Привилегированные намерения.
 intents = discord.Intents.default()
 intents.members = True
