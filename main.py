@@ -36,22 +36,15 @@ def FastEmbed(titl, desc):
 class Pers():
   def __init__(self, name, stats, member):
     self.name = name
-    self.stats = stats
-    self.statsDict = {
-      'hp' : stats[1],
-      'ar' : stats[2],
-      'an' : stats[3],
-      'pw' : stats[4],
-      'dx' : stats[5],
-      'ac' : stats[6]
-    }
+    self.statsDict = {}
+    self.stats = stats # Список хар-к
+    self.hp = int(stats[0]) # Здоровье
+    self.ar = int(stats[1]) # Защита
+    self.it = int(stats[2]) # Интеллект
+    self.pw = int(stats[3]) # Сила
+    self.dx = int(stats[4]) # Ловкость
+    self.ch = int(stats[5]) # Харизма
     self.member = member
-
-  def edit_stat(self, stat, value):
-    self.statsDict[stat] = value
-
-  def get_stat(self, stat):
-    return self.statsDict.get(stat)
 
 # Инициализация персонажей
 def getPers():
@@ -59,20 +52,24 @@ def getPers():
   PersonsFile = open('persons.txt')
   for line in PersonsFile:
     P1 = line.split(',')
-    P2 = P1[2].split('-')
-    P3 = P2[2].split('/')
-    P4 = Pers(int(P2[1]), P3, P1[1])
-    persons[int(P1[1])] = P4
+    P2 = P1[1].split('-')
+    P3 = P2[1].split('/')
+    P4 = Pers(P2[0], P3, P1[0])
+    persons[int(P1[0])] = P4
   PersonsFile.close
   return persons
 
 def savePers(persons):
   PersonsFile = open('persons.txt', 'w')
-  for key, value in persons:
-    P3 = "/".join(value.stats)
+  for key in persons:
+    value = persons[key]
+    s = value
+    stats = [str(s.hp), str(s.ar), str(s.it),
+    str(s.pw), str(s.dx), str(s.ch)]
+    P3 = "/".join(stats)
     P2 = value.name + '-' + P3
     P1 = str(value.member) + ',' + P2
-    write(P1 + '/n')
+    PersonsFile.write(P1 + enter)
   PersonsFile.close
 
 # Привилегированные намерения.
@@ -100,15 +97,7 @@ async def on_member_join(member):
       if guild.system_channel  is not None:
           to_send = 'Приветствуем {0.mention} на {1.name}!'.format(member, guild)
           await guild.system_channel.send(to_send)
-'''
-@bot.event
-async def on_member_join(member):
-      guild = member.guild
-      if guild.system_channel  is not None:
-            to_send = 'Приветствуем {0.mention} на {1.name}!'.format(member, guild)
-            await guild.system_channel.send(to_send)
-        
-'''
+
 # Команда - когда пользователь присоединился к серву
 @bot.command()
 async def joined(ctx, member: discord.Member):
@@ -133,24 +122,39 @@ async def image(ctx):
     await ctx.send(file = discord.File('./pict.jpg'))
     
 # RP
-@bot.command()
+@bot.command() # Показывает хар-ки
 async def stats(ctx):
   persons = getPers()
   member = ctx.author.id
   Person = persons.get(member)
-  await ctx.send(Peson.name + Person.stats)
-  
-@bot.command()
-async def newpers(ctx, name):
-  member = ctx.author.id
-  P4 = Pers(name, ('30', '20', '60', '50', '50', '30'), member)
-  persons = {
-    member : P4
-  }
+  disc = '**Имя:** ' + Person.name + enter + enter
+  disc = disc + '<:heal:870700594027966464> **Здоровье:** ' + str(Person.hp) + enter
+  disc = disc + '<:armor:870700741990416414> **Защита:** ' + str(Person.ar)+ enter
+  disc = disc + '<:inti:870763465650892820> **Интеллект:** ' + str(Person.it) + enter
+  disc = disc + '<:power:870763303004143687> **Сила:** ' + str(Person.pw) + enter
+  disc = disc + '<:dx:870763635511812166> **Ловкость:** ' + str(Person.dx) + enter
+  disc = disc + '<:ch:877141854821433355> **Харизма:** ' + str(Person.ch) + enter
+  embed = FastEmbed('Характеристики', disc)
+  await ctx.send(embed = embed)
+
+@bot.command() # Изменяет хар-ку
+async def edit(ctx, member: discord.Member, stat, value: int):
+  persons = getPers()
+  member = member.id
+  Person = persons.get(member)
+  Person.statsDict[stat] = value
   savePers(persons)
-  
+  await ctx.send(Person.name + str(Person.statsDict))
 
-# keep_alive()
-
+@bot.command() # Создает нового персонажа
+async def newpers(ctx, *, name):
+  persons = getPers()
+  memberId = ctx.author.id
+  P4 = Pers(name, ['100', '2', '2', '2', '2', '4'], memberId)
+  persons[memberId] = P4
+  await ctx.send(P4.name + str(P4.statsDict))
+  Person = persons[memberId]
+  await ctx.send(Person.name + str(Person.statsDict))
+  savePers(persons)
 # run
 bot.run(os.environ['TOKEN'])
